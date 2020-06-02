@@ -1,0 +1,24 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t jhalen/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true jhalen/react-test npm test
+
+after_success:
+    - docker build -t jhalen/multi-client ./client
+    - docker build -t jhalen/multi-nginx ./nginx
+    - docker build -t jhalen/multi-server ./server
+    - docker build -t jhalen/multi-worker ./worker
+
+    # Log in to dockerhub
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+    # Push to dockerhub
+    - docker push jhalen/multi-client
+    - docker push jhalen/multi-nginx
+    - docker push jhalen/multi-server
+    - docker push jhalen/multi-worker
